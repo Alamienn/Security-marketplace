@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Security Personnel – SecureGuard</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: { extend: { colors: { primary: '#0f766e', primaryDark: '#0d5c56' } } }
+    }
+  </script>
+</head>
+<body class="bg-gray-50 text-gray-800">
+
+  <nav class="bg-white shadow-sm">
+    <div class="max-w-7xl mx-auto px-4 h-14 flex items-center justify-between">
+      <div class="flex items-center gap-2">
+        <div class="w-8 h-8 bg-primary rounded flex items-center justify-center text-white font-bold text-sm">SG</div>
+        <span class="font-bold text-primary">SecureGuard</span>
+        <span class="text-xs bg-teal-100 text-primary px-2 py-0.5 rounded ml-2">Customer</span>
+      </div>
+      <div class="flex items-center gap-4 text-sm">
+        <a href="customer-dashboard.html" class="hover:underline">Dashboard</a>
+        <button onclick="logout()" class="text-red-600 hover:underline">Logout</button>
+      </div>
+    </div>
+  </nav>
+
+  <div class="max-w-7xl mx-auto px-4 py-8">
+    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
+      <div>
+        <h1 class="text-2xl font-bold">Security Personnel</h1>
+        <p class="text-gray-600 text-sm">Browse available officers from registered companies</p>
+      </div>
+      <div class="flex gap-2">
+        <input id="search-input" type="text" placeholder="Search by name or specialty..." 
+               class="border rounded-lg px-3 py-2 text-sm w-64" oninput="filterOfficers()">
+      </div>
+    </div>
+
+    <div id="officers-grid" class="grid sm:grid-cols-2 lg:grid-cols-3 gap-5">
+      <!-- filled by JS -->
+    </div>
+  </div>
+
+  <!-- Request Modal -->
+  <div id="request-modal" class="hidden fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+    <div class="bg-white rounded-2xl max-w-md w-full p-6">
+      <h2 class="text-xl font-bold mb-4">Request Security Officer</h2>
+      <form onsubmit="submitRequest(event)">
+        <input type="hidden" id="req-officer-id">
+        <input type="hidden" id="req-company-id">
+        <input type="hidden" id="req-officer-name">
+
+        <div class="mb-3">
+          <label class="block text-sm font-medium mb-1">Officer</label>
+          <p id="req-officer-display" class="font-medium"></p>
+        </div>
+        <div class="mb-3">
+          <label class="block text-sm font-medium mb-1">Number of Days / Months *</label>
+          <div class="flex gap-2">
+            <input name="duration" type="number" min="1" required class="border rounded-lg px-3 py-2 w-24" placeholder="7">
+            <select name="unit" class="border rounded-lg px-3 py-2">
+              <option value="days">Days</option>
+              <option value="months">Months</option>
+            </select>
+          </div>
+        </div>
+        <div class="mb-3">
+          <label class="block text-sm font-medium mb-1">Start Date</label>
+          <input name="startDate" type="date" class="w-full border rounded-lg px-3 py-2">
+        </div>
+        <div class="mb-4">
+          <label class="block text-sm font-medium mb-1">Location & Extra Details *</label>
+          <textarea name="details" required rows="3" class="w-full border rounded-lg px-3 py-2" 
+                    placeholder="Address, number of officers needed, special requirements..."></textarea>
+        </div>
+        <div class="flex gap-3">
+          <button type="submit" class="flex-1 bg-primary text-white py-2 rounded-lg hover:bg-primaryDark">Submit Request</button>
+          <button type="button" onclick="closeModal()" class="border px-4 py-2 rounded-lg">Cancel</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <script>
+    const user = JSON.parse(localStorage.getItem('sg_current_user') || 'null');
+    if (!user || user.role !== 'customer') {
+      alert('Please login as Customer');
+      window.location.href = '../index.html';
+    }
+
+    // Collect all officers from all companies
+    function getAllOfficers() {
+      const allUsers = JSON.parse(localStorage.getItem('sg_users') || '[]');
+      const companies = allUsers.filter(u => u.role === 'company');
+      let officers = [];
+
+      companies.forEach(c => {
+        const list = JSON.parse(localStorage.getItem('sg_officers_' + c.id) || '[]');
+        list.forEach(o => {
+          officers.push({
+            ...o,
+            companyId: c.id,
+            companyName: c.name,
+            companyLocation: c.location || ''
+          });
+        });
+      });
+      return officers;
+    }
+
+    let allOfficers = [];
+
+    function renderOfficers(list) {
+      const grid = document.getElementById('officers-grid');
+      if (list.length === 0) {
+        grid.innerHTML = `
+          <div class="col-span-full bg-white rounded-xl p-10 text-center text-gray-500">
+            No officers available yet.<br>
+            <span class="text-sm">Companies need to add officers first.</span>
+          </div>`;
+        return;
+      }
+
+      grid.innerHTML = list.map(o => `
+        <div class="bg-white rounded-xl shadow-sm overflow-hidden hover:shadow-md transition">
+          <div class="h-40 bg-gray-100 flex items-center justify-center text-4xl font-bold text-gray-400">
+            ${o.photo ? `<img src="${o.photo}" class="w-full h-full object-cover">` : o.name.charAt(0)}
+          </div>
+          <div class="p-4">
+            <h3 class="font-semibold text-lg">${o.name}</h3>
+            <p class="text-sm text-gray-500">${o.gender} • ${o.age || '—'} yrs</p>
+            <p class="text-sm text-primary font-medium mt-1">${o.specialty || 'Security Officer'}</p>
+            <p class="text-xs text-gray-500 mt-1">${o.companyName} ${o.companyLocation ? '• ' + o.companyLocation : ''}</p>
+            <p class="text-sm text-gray-600 mt-2 line-clamp-2">${o.intro || ''}</p>
+            <div class="flex justify-between items-center mt-4">
+              <span class="font-semibold text-primary">₦${Number(o.rate || 0).toLocaleString()}/day</span>
+              <button onclick='openRequest(${JSON.stringify(o)})' 
+                      class="bg-primary text-white text-sm px-3 py-1.5 rounded-lg hover:bg-primaryDark">
+                Request
+              </button>
+            </div>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    function filterOfficers() {
+      const q = document.getElementById('search-input').value.toLowerCase();
+      const filtered = allOfficers.filter(o => 
+        o.name.toLowerCase().includes(q) || 
+        (o.specialty || '').toLowerCase().includes(q) ||
+        (o.companyName || '').toLowerCase().includes(q)
+      );
+      renderOfficers(filtered);
+    }
+
+    function openRequest(officer) {
+      document.getElementById('req-officer-id').value = officer.id;
+      document.getElementById('req-company-id').value = officer.companyId;
+      document.getElementById('req-officer-name').value = officer.name;
+      document.getElementById('req-officer-display').textContent = officer.name + ' (' + officer.companyName + ')';
+      document.getElementById('request-modal').classList.remove('hidden');
+    }
+
+    function closeModal() {
+      document.getElementById('request-modal').classList.add('hidden');
+    }
+
+    function submitRequest(e) {
+      e.preventDefault();
+      const form = e.target;
+      const data = Object.fromEntries(new FormData(form));
+
+      const requests = JSON.parse(localStorage.getItem('sg_requests') || '[]');
+      requests.push({
+        id: Date.now().toString(),
+        customerId: user.id,
+        customerName: user.name,
+        companyId: data.companyId || document.getElementById('req-company-id').value,
+        officerId: document.getElementById('req-officer-id').value,
+        officerName: document.getElementById('req-officer-name').value,
+        duration: data.duration,
+        unit: data.unit,
+        startDate: data.startDate,
+        details: data.details,
+        status: 'pending',
+        createdAt: new Date().toISOString()
+      });
+
+      localStorage.setItem('sg_requests', JSON.stringify(requests));
+      alert('Request submitted successfully!\nIt will be reviewed and forwarded to the company within 24 hours.');
+      closeModal();
+      form.reset();
+    }
+
+    function logout() {
+      localStorage.removeItem('sg_current_user');
+      window.location.href = '../index.html';
+    }
+
+    // Init
+    allOfficers = getAllOfficers();
+    renderOfficers(allOfficers);
+  </script>
+</body>
+</html>

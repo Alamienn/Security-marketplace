@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Company Profile – SecureGuard</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: { extend: { colors: { primary: '#0f766e', primaryDark: '#0d5c56' } } }
+    }
+  </script>
+</head>
+<body class="bg-gray-50 text-gray-800">
+
+  <nav class="bg-white shadow-sm">
+    <div class="max-w-7xl mx-auto px-4 h-14 flex items-center justify-between">
+      <div class="flex items-center gap-2">
+        <div class="w-8 h-8 bg-primary rounded flex items-center justify-center text-white font-bold text-sm">SG</div>
+        <span class="font-bold text-primary">SecureGuard</span>
+        <span class="text-xs bg-amber-100 text-amber-800 px-2 py-0.5 rounded ml-2">Company</span>
+      </div>
+      <button onclick="logout()" class="text-sm text-red-600 hover:underline">Logout</button>
+    </div>
+  </nav>
+
+  <div class="max-w-7xl mx-auto px-4 py-8 grid md:grid-cols-4 gap-6">
+    <aside class="md:col-span-1">
+      <div class="bg-white rounded-xl shadow-sm p-4 space-y-1">
+        <a href="company-dashboard.html" class="block px-3 py-2 rounded-lg hover:bg-gray-100">Dashboard</a>
+        <a href="company-officers.html" class="block px-3 py-2 rounded-lg hover:bg-gray-100">My Officers</a>
+        <a href="company-services.html" class="block px-3 py-2 rounded-lg hover:bg-gray-100">My Services</a>
+        <a href="company-requests.html" class="block px-3 py-2 rounded-lg hover:bg-gray-100">Incoming Requests</a>
+        <a href="company-profile.html" class="block px-3 py-2 rounded-lg bg-primary text-white font-medium">Company Profile</a>
+      </div>
+    </aside>
+
+    <main class="md:col-span-3">
+      <div class="bg-white rounded-xl shadow-sm p-6">
+        <h1 class="text-2xl font-bold mb-6">Company Profile</h1>
+
+        <form onsubmit="saveProfile(event)" class="space-y-4 max-w-xl">
+          <div>
+            <label class="block text-sm font-medium mb-1">Company Name *</label>
+            <input id="name" required class="w-full border rounded-lg px-3 py-2">
+          </div>
+          <div>
+            <label class="block text-sm font-medium mb-1">Email</label>
+            <input id="email" type="email" readonly class="w-full border rounded-lg px-3 py-2 bg-gray-50">
+          </div>
+          <div>
+            <label class="block text-sm font-medium mb-1">Phone</label>
+            <input id="phone" class="w-full border rounded-lg px-3 py-2">
+          </div>
+          <div>
+            <label class="block text-sm font-medium mb-1">Service Locations</label>
+            <input id="location" class="w-full border rounded-lg px-3 py-2" placeholder="e.g. Kano State, Entire Nigeria, Africa">
+          </div>
+          <div>
+            <label class="block text-sm font-medium mb-1">Company Address</label>
+            <input id="address" class="w-full border rounded-lg px-3 py-2" placeholder="Street, City, State">
+          </div>
+          <div>
+            <label class="block text-sm font-medium mb-1">Account / Bank Details (for payments)</label>
+            <textarea id="account" rows="2" class="w-full border rounded-lg px-3 py-2" placeholder="Bank name, Account number, Account name..."></textarea>
+          </div>
+          <div>
+            <label class="block text-sm font-medium mb-1">About the Company</label>
+            <textarea id="about" rows="3" class="w-full border rounded-lg px-3 py-2" placeholder="Brief description of your company..."></textarea>
+          </div>
+
+          <button type="submit" class="bg-primary text-white px-6 py-2.5 rounded-lg hover:bg-primaryDark">
+            Save Changes
+          </button>
+        </form>
+      </div>
+    </main>
+  </div>
+
+  <script>
+    const user = JSON.parse(localStorage.getItem('sg_current_user') || 'null');
+    if (!user || user.role !== 'company') {
+      window.location.href = '../index.html';
+    }
+
+    // Fill form
+    document.getElementById('name').value = user.name || '';
+    document.getElementById('email').value = user.email || '';
+    document.getElementById('phone').value = user.phone || '';
+    document.getElementById('location').value = user.location || '';
+    document.getElementById('address').value = user.address || '';
+    document.getElementById('account').value = user.account || '';
+    document.getElementById('about').value = user.about || '';
+
+    function saveProfile(e) {
+      e.preventDefault();
+
+      user.name = document.getElementById('name').value.trim();
+      user.phone = document.getElementById('phone').value.trim();
+      user.location = document.getElementById('location').value.trim();
+      user.address = document.getElementById('address').value.trim();
+      user.account = document.getElementById('account').value.trim();
+      user.about = document.getElementById('about').value.trim();
+
+      // Update current user
+      localStorage.setItem('sg_current_user', JSON.stringify(user));
+
+      // Also update in the users list
+      const users = JSON.parse(localStorage.getItem('sg_users') || '[]');
+      const idx = users.findIndex(u => u.id === user.id);
+      if (idx !== -1) {
+        users[idx] = { ...users[idx], ...user };
+        localStorage.setItem('sg_users', JSON.stringify(users));
+      }
+
+      alert('Profile updated successfully!');
+    }
+
+    function logout() {
+      localStorage.removeItem('sg_current_user');
+      window.location.href = '../index.html';
+    }
+  </script>
+</body>
+</html>

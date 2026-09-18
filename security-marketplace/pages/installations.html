@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>CCTV Installations – SecureGuard</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: { extend: { colors: { primary: '#0f766e', primaryDark: '#0d5c56' } } }
+    }
+  </script>
+</head>
+<body class="bg-gray-50 text-gray-800">
+
+  <nav class="bg-white shadow-sm">
+    <div class="max-w-7xl mx-auto px-4 h-14 flex items-center justify-between">
+      <div class="flex items-center gap-2">
+        <div class="w-8 h-8 bg-primary rounded flex items-center justify-center text-white font-bold text-sm">SG</div>
+        <span class="font-bold text-primary">SecureGuard</span>
+        <span class="text-xs bg-teal-100 text-primary px-2 py-0.5 rounded ml-2">Customer</span>
+      </div>
+      <div class="flex items-center gap-4 text-sm">
+        <a href="customer-dashboard.html" class="hover:underline">Dashboard</a>
+        <button onclick="logout()" class="text-red-600 hover:underline">Logout</button>
+      </div>
+    </div>
+  </nav>
+
+  <div class="max-w-7xl mx-auto px-4 py-8">
+    <div class="mb-6">
+      <h1 class="text-2xl font-bold">CCTV Installations</h1>
+      <p class="text-gray-600 text-sm">Browse installation packages offered by security companies</p>
+    </div>
+
+    <div id="services-grid" class="grid sm:grid-cols-2 lg:grid-cols-3 gap-5">
+      <!-- filled by JS -->
+    </div>
+  </div>
+
+  <!-- Request Modal -->
+  <div id="request-modal" class="hidden fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+    <div class="bg-white rounded-2xl max-w-md w-full p-6">
+      <h2 class="text-xl font-bold mb-4">Request CCTV Installation</h2>
+      <form onsubmit="submitRequest(event)">
+        <input type="hidden" id="req-service-id">
+        <input type="hidden" id="req-company-id">
+        <input type="hidden" id="req-service-title">
+
+        <div class="mb-3">
+          <label class="block text-sm font-medium mb-1">Package</label>
+          <p id="req-service-display" class="font-medium"></p>
+        </div>
+        <div class="mb-3">
+          <label class="block text-sm font-medium mb-1">Preferred Duration / Timeline *</label>
+          <div class="flex gap-2">
+            <input name="duration" type="number" min="1" required class="border rounded-lg px-3 py-2 w-24" placeholder="7">
+            <select name="unit" class="border rounded-lg px-3 py-2">
+              <option value="days">Days</option>
+              <option value="months">Months</option>
+            </select>
+          </div>
+        </div>
+        <div class="mb-3">
+          <label class="block text-sm font-medium mb-1">Installation Address & Details *</label>
+          <textarea name="details" required rows="3" class="w-full border rounded-lg px-3 py-2"
+                    placeholder="Full address, number of cameras needed, building type, special requirements..."></textarea>
+        </div>
+        <div class="flex gap-3">
+          <button type="submit" class="flex-1 bg-primary text-white py-2 rounded-lg hover:bg-primaryDark">Submit Request</button>
+          <button type="button" onclick="closeModal()" class="border px-4 py-2 rounded-lg">Cancel</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <script>
+    const user = JSON.parse(localStorage.getItem('sg_current_user') || 'null');
+    if (!user || user.role !== 'customer') {
+      alert('Please login as Customer');
+      window.location.href = '../index.html';
+    }
+
+    function getAllCctvServices() {
+      const allUsers = JSON.parse(localStorage.getItem('sg_users') || '[]');
+      const companies = allUsers.filter(u => u.role === 'company');
+      let services = [];
+
+      companies.forEach(c => {
+        const list = JSON.parse(localStorage.getItem('sg_services_' + c.id) || '[]');
+        list.filter(s => s.type === 'CCTV Installation' || s.type.toLowerCase().includes('cctv'))
+            .forEach(s => {
+              services.push({
+                ...s,
+                companyId: c.id,
+                companyName: c.name,
+                companyLocation: c.location || ''
+              });
+            });
+      });
+      return services;
+    }
+
+    function renderServices(list) {
+      const grid = document.getElementById('services-grid');
+      if (list.length === 0) {
+        grid.innerHTML = `
+          <div class="col-span-full bg-white rounded-xl p-10 text-center text-gray-500">
+            No CCTV packages available yet.<br>
+            <span class="text-sm">Companies need to add CCTV services first.</span>
+          </div>`;
+        return;
+      }
+
+      grid.innerHTML = list.map(s => `
+        <div class="bg-white rounded-xl shadow-sm p-5 hover:shadow-md transition">
+          <span class="text-xs bg-amber-100 text-amber-800 px-2 py-0.5 rounded">${s.type}</span>
+          <h3 class="font-semibold text-lg mt-2">${s.title}</h3>
+          <p class="text-sm text-gray-500 mt-1">${s.companyName} ${s.companyLocation ? '• ' + s.companyLocation : ''}</p>
+          <p class="text-sm text-gray-600 mt-2">${s.description || ''}</p>
+          <div class="flex justify-between items-center mt-4">
+            <span class="font-semibold text-primary">₦${Number(s.price).toLocaleString()} <span class="text-xs text-gray-500 font-normal">(${s.priceUnit})</span></span>
+            <button onclick='openRequest(${JSON.stringify(s)})'
+                    class="bg-primary text-white text-sm px-3 py-1.5 rounded-lg hover:bg-primaryDark">
+              Request
+            </button>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    function openRequest(service) {
+      document.getElementById('req-service-id').value = service.id;
+      document.getElementById('req-company-id').value = service.companyId;
+      document.getElementById('req-service-title').value = service.title;
+      document.getElementById('req-service-display').textContent = service.title + ' (' + service.companyName + ')';
+      document.getElementById('request-modal').classList.remove('hidden');
+    }
+
+    function closeModal() {
+      document.getElementById('request-modal').classList.add('hidden');
+    }
+
+    function submitRequest(e) {
+      e.preventDefault();
+      const form = e.target;
+      const data = Object.fromEntries(new FormData(form));
+
+      const requests = JSON.parse(localStorage.getItem('sg_requests') || '[]');
+      requests.push({
+        id: Date.now().toString(),
+        customerId: user.id,
+        customerName: user.name,
+        companyId: document.getElementById('req-company-id').value,
+        serviceId: document.getElementById('req-service-id').value,
+        serviceTitle: document.getElementById('req-service-title').value,
+        duration: data.duration,
+        unit: data.unit,
+        details: data.details,
+        status: 'pending',
+        createdAt: new Date().toISOString()
+      });
+
+      localStorage.setItem('sg_requests', JSON.stringify(requests));
+      alert('Request submitted successfully!\nIt will be reviewed and forwarded to the company within 24 hours.');
+      closeModal();
+      form.reset();
+    }
+
+    function logout() {
+      localStorage.removeItem('sg_current_user');
+      window.location.href = '../index.html';
+    }
+
+    renderServices(getAllCctvServices());
+  </script>
+</body>
+</html>

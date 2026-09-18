@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>My Requests – SecureGuard</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: { extend: { colors: { primary: '#0f766e', primaryDark: '#0d5c56' } } }
+    }
+  </script>
+</head>
+<body class="bg-gray-50 text-gray-800">
+
+  <nav class="bg-white shadow-sm">
+    <div class="max-w-7xl mx-auto px-4 h-14 flex items-center justify-between">
+      <div class="flex items-center gap-2">
+        <div class="w-8 h-8 bg-primary rounded flex items-center justify-center text-white font-bold text-sm">SG</div>
+        <span class="font-bold text-primary">SecureGuard</span>
+        <span class="text-xs bg-teal-100 text-primary px-2 py-0.5 rounded ml-2">Customer</span>
+      </div>
+      <div class="flex items-center gap-4 text-sm">
+        <a href="customer-dashboard.html" class="hover:underline">Dashboard</a>
+        <button onclick="logout()" class="text-red-600 hover:underline">Logout</button>
+      </div>
+    </div>
+  </nav>
+
+  <div class="max-w-7xl mx-auto px-4 py-8 grid md:grid-cols-4 gap-6">
+    <aside class="md:col-span-1">
+      <div class="bg-white rounded-xl shadow-sm p-4 space-y-1">
+        <a href="customer-dashboard.html" class="block px-3 py-2 rounded-lg hover:bg-gray-100">Dashboard</a>
+        <a href="search.html" class="block px-3 py-2 rounded-lg hover:bg-gray-100">Search Services</a>
+        <a href="personnel.html" class="block px-3 py-2 rounded-lg hover:bg-gray-100">Security Personnel</a>
+        <a href="installations.html" class="block px-3 py-2 rounded-lg hover:bg-gray-100">CCTV Installations</a>
+        <a href="my-requests.html" class="block px-3 py-2 rounded-lg bg-primary text-white font-medium">My Requests</a>
+      </div>
+    </aside>
+
+    <main class="md:col-span-3 space-y-6">
+      <div>
+        <h1 class="text-2xl font-bold">My Requests</h1>
+        <p class="text-gray-600 text-sm">Track the status of your security requests</p>
+      </div>
+
+      <div id="requests-list" class="space-y-4"></div>
+    </main>
+  </div>
+
+  <script>
+    const user = JSON.parse(localStorage.getItem('sg_current_user') || 'null');
+    if (!user || user.role !== 'customer') {
+      window.location.href = '../index.html';
+    }
+
+    function loadRequests() {
+      const all = JSON.parse(localStorage.getItem('sg_requests') || '[]');
+      const mine = all.filter(r => r.customerId === user.id);
+      const container = document.getElementById('requests-list');
+
+      if (mine.length === 0) {
+        container.innerHTML = `
+          <div class="bg-white rounded-xl p-10 text-center text-gray-500">
+            You have not submitted any requests yet.<br>
+            <a href="personnel.html" class="text-primary hover:underline">Browse security personnel</a> or 
+            <a href="installations.html" class="text-primary hover:underline">CCTV packages</a>.
+          </div>`;
+        return;
+      }
+
+      mine.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+
+      container.innerHTML = mine.map(r => {
+        const statusColor = {
+          pending: 'bg-amber-100 text-amber-800',
+          accepted: 'bg-green-100 text-green-800',
+          rejected: 'bg-red-100 text-red-800'
+        }[r.status] || 'bg-gray-100';
+
+        // find company name
+        const companies = JSON.parse(localStorage.getItem('sg_users') || '[]');
+        const company = companies.find(c => c.id === r.companyId);
+
+        return `
+        <div class="bg-white rounded-xl shadow-sm p-5">
+          <div class="flex flex-wrap justify-between items-start gap-3 mb-3">
+            <div>
+              <h3 class="font-semibold text-lg">${r.officerName || r.serviceTitle || 'Service Request'}</h3>
+              <p class="text-sm text-gray-500">Company: ${company ? company.name : 'Unknown'}</p>
+            </div>
+            <span class="text-xs px-2.5 py-1 rounded-full font-medium ${statusColor}">${r.status.toUpperCase()}</span>
+          </div>
+          <div class="text-sm text-gray-600 space-y-1">
+            <p><strong>Duration:</strong> ${r.duration} ${r.unit}</p>
+            <p><strong>Start Date:</strong> ${r.startDate || 'Not specified'}</p>
+            <p><strong>Details:</strong> ${r.details}</p>
+            <p class="text-xs text-gray-400 mt-2">Submitted: ${new Date(r.createdAt).toLocaleString()}</p>
+            ${r.respondedAt ? `<p class="text-xs text-gray-400">Responded: ${new Date(r.respondedAt).toLocaleString()}</p>` : ''}
+          </div>
+        </div>`;
+      }).join('');
+    }
+
+    function logout() {
+      localStorage.removeItem('sg_current_user');
+      window.location.href = '../index.html';
+    }
+
+    loadRequests();
+  </script>
+</body>
+</html>

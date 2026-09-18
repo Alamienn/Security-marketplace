@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Customer Dashboard – SecureGuard</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            primary: '#0f766e',
+            primaryDark: '#0d5c56',
+          }
+        }
+      }
+    }
+  </script>
+</head>
+<body class="bg-gray-50 text-gray-800">
+
+  <!-- Top Nav -->
+  <nav class="bg-white shadow-sm">
+    <div class="max-w-7xl mx-auto px-4 h-14 flex items-center justify-between">
+      <div class="flex items-center gap-2">
+        <div class="w-8 h-8 bg-primary rounded flex items-center justify-center text-white font-bold text-sm">SG</div>
+        <span class="font-bold text-primary">SecureGuard</span>
+        <span class="text-xs bg-teal-100 text-primary px-2 py-0.5 rounded ml-2">Customer</span>
+      </div>
+      <div class="flex items-center gap-4 text-sm">
+        <span id="user-name" class="font-medium"></span>
+        <button onclick="logout()" class="text-red-600 hover:underline">Logout</button>
+      </div>
+    </div>
+  </nav>
+
+  <div class="max-w-7xl mx-auto px-4 py-8 grid md:grid-cols-4 gap-6">
+
+    <!-- Sidebar -->
+    <aside class="md:col-span-1">
+      <div class="bg-white rounded-xl shadow-sm p-4 space-y-1">
+        <a href="customer-dashboard.html" class="block px-3 py-2 rounded-lg bg-primary text-white font-medium">Dashboard</a>
+        <a href="search.html" class="block px-3 py-2 rounded-lg hover:bg-gray-100">Search Services</a>
+        <a href="personnel.html" class="block px-3 py-2 rounded-lg hover:bg-gray-100">Security Personnel</a>
+        <a href="installations.html" class="block px-3 py-2 rounded-lg hover:bg-gray-100">CCTV Installations</a>
+        <a href="my-requests.html" class="block px-3 py-2 rounded-lg hover:bg-gray-100">My Requests</a>
+      </div>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="md:col-span-3 space-y-6">
+      <div class="bg-white rounded-xl shadow-sm p-6">
+        <h1 class="text-2xl font-bold mb-1">Welcome back, <span id="welcome-name">Customer</span></h1>
+        <p class="text-gray-600">Find security officers, CCTV installation or VIP protection.</p>
+      </div>
+
+      <!-- Quick Actions -->
+      <div class="grid sm:grid-cols-3 gap-4">
+        <a href="personnel.html" class="bg-white border rounded-xl p-5 hover:shadow-md transition">
+          <div class="text-primary font-semibold mb-1">Hire Officers</div>
+          <p class="text-sm text-gray-500">Browse available security personnel</p>
+        </a>
+        <a href="installations.html" class="bg-white border rounded-xl p-5 hover:shadow-md transition">
+          <div class="text-primary font-semibold mb-1">CCTV Install</div>
+          <p class="text-sm text-gray-500">Request camera installation</p>
+        </a>
+        <a href="search.html" class="bg-white border rounded-xl p-5 hover:shadow-md transition">
+          <div class="text-primary font-semibold mb-1">Search All</div>
+          <p class="text-sm text-gray-500">Filter by location & service</p>
+        </a>
+      </div>
+
+      <!-- Recent Requests (placeholder) -->
+      <div class="bg-white rounded-xl shadow-sm p-6">
+        <h2 class="font-semibold text-lg mb-4">Recent Requests</h2>
+        <div id="requests-list" class="text-sm text-gray-500">
+          No requests yet. Start by searching for a service.
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <script>
+    const user = JSON.parse(localStorage.getItem('sg_current_user') || 'null');
+    if (!user || user.role !== 'customer') {
+      alert('Please login as a Customer');
+      window.location.href = '../index.html';
+    } else {
+      document.getElementById('user-name').textContent = user.name;
+      document.getElementById('welcome-name').textContent = user.name.split(' ')[0];
+
+      // Show recent requests
+      const all = JSON.parse(localStorage.getItem('sg_requests') || '[]');
+      const mine = all.filter(r => r.customerId === user.id)
+                      .sort((a,b) => new Date(b.createdAt) - new Date(a.createdAt))
+                      .slice(0, 5);
+      const box = document.getElementById('requests-list');
+      if (mine.length === 0) {
+        box.innerHTML = 'No requests yet. Start by searching for a service.';
+      } else {
+        box.innerHTML = mine.map(r => {
+          const statusColor = { pending: 'text-amber-600', accepted: 'text-green-600', rejected: 'text-red-600' }[r.status] || '';
+          return `<div class="flex justify-between py-2 border-b last:border-0">
+            <span>${r.officerName || r.serviceTitle || 'Request'}</span>
+            <span class="font-medium ${statusColor}">${r.status}</span>
+          </div>`;
+        }).join('') + `<a href="my-requests.html" class="inline-block mt-3 text-primary text-sm hover:underline">View all →</a>`;
+      }
+    }
+
+    function logout() {
+      localStorage.removeItem('sg_current_user');
+      window.location.href = '../index.html';
+    }
+  </script>
+</body>
+</html>

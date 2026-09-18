@@ -1,0 +1,300 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>SecureGuard Marketplace – Hire Officers & CCTV Installations</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            primary: '#0f766e',      // teal-700
+            primaryDark: '#0d5c56',
+            accent: '#f59e0b',       // amber
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    body { font-family: system-ui, -apple-system, sans-serif; }
+    .hero-bg {
+      background: linear-gradient(135deg, #0f766e 0%, #134e4a 50%, #0f172a 100%);
+    }
+  </style>
+</head>
+<body class="bg-gray-50 text-gray-800">
+
+  <!-- Navbar -->
+  <nav class="bg-white shadow-sm sticky top-0 z-50">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div class="flex justify-between h-16 items-center">
+        <div class="flex items-center gap-2">
+          <div class="w-9 h-9 bg-primary rounded-lg flex items-center justify-center text-white font-bold text-lg">SG</div>
+          <span class="font-bold text-xl text-primary">SecureGuard</span>
+        </div>
+        <div class="hidden md:flex items-center gap-8 text-sm font-medium">
+          <a href="#services" class="hover:text-primary">Services</a>
+          <a href="#how-it-works" class="hover:text-primary">How it Works</a>
+          <a href="#companies" class="hover:text-primary">Companies</a>
+          <button onclick="openAuth('login')" class="text-primary hover:underline">Login</button>
+          <button onclick="openAuth('register')" class="bg-primary text-white px-4 py-2 rounded-lg hover:bg-primaryDark transition">
+            Register
+          </button>
+        </div>
+        <!-- Mobile menu button -->
+        <button class="md:hidden p-2" onclick="document.getElementById('mobile-menu').classList.toggle('hidden')">
+          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/>
+          </svg>
+        </button>
+      </div>
+    </div>
+    <!-- Mobile menu -->
+    <div id="mobile-menu" class="hidden md:hidden bg-white border-t px-4 py-3 space-y-2">
+      <a href="#services" class="block py-2">Services</a>
+      <a href="#how-it-works" class="block py-2">How it Works</a>
+      <button onclick="openAuth('login')" class="block w-full text-left py-2 text-primary">Login</button>
+      <button onclick="openAuth('register')" class="block w-full text-left py-2 font-medium">Register</button>
+    </div>
+  </nav>
+
+  <!-- Hero -->
+  <section class="hero-bg text-white">
+    <div class="max-w-7xl mx-auto px-4 py-20 md:py-28 grid md:grid-cols-2 gap-12 items-center">
+      <div>
+        <h1 class="text-4xl md:text-5xl font-bold leading-tight mb-6">
+          Hire Trusted Security Officers<br/>
+          <span class="text-amber-300">& Install CCTV</span>
+        </h1>
+        <p class="text-lg text-teal-100 mb-8 max-w-lg">
+          Connect with verified security companies across Nigeria and Africa. 
+          Request officers, CCTV installations or VIP protection — reviewed within 24 hours.
+        </p>
+        <div class="flex flex-wrap gap-4">
+          <button onclick="openAuth('register')" class="bg-amber-400 text-gray-900 font-semibold px-6 py-3 rounded-lg hover:bg-amber-300 transition">
+            Get Started Free
+          </button>
+          <a href="#services" class="border border-white/40 px-6 py-3 rounded-lg hover:bg-white/10 transition">
+            View Services
+          </a>
+        </div>
+      </div>
+
+      <!-- Quick Auth Card on Hero -->
+      <div class="bg-white text-gray-800 rounded-2xl shadow-2xl p-6 md:p-8">
+        <h2 class="text-xl font-bold mb-1" id="auth-title">Login to SecureGuard</h2>
+        <p class="text-sm text-gray-500 mb-6" id="auth-subtitle">Access your account as Customer or Company</p>
+
+        <!-- Role Toggle -->
+        <div class="flex bg-gray-100 rounded-lg p-1 mb-6">
+          <button id="btn-customer" onclick="setRole('customer')" class="flex-1 py-2 rounded-md text-sm font-medium bg-primary text-white">
+            Customer
+          </button>
+          <button id="btn-company" onclick="setRole('company')" class="flex-1 py-2 rounded-md text-sm font-medium text-gray-600">
+            Security Company
+          </button>
+        </div>
+
+        <!-- Login Form -->
+        <form id="login-form" class="space-y-4" onsubmit="handleLogin(event)">
+          <div>
+            <label class="block text-sm font-medium mb-1">Email</label>
+            <input type="email" required class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary" placeholder="you@example.com">
+          </div>
+          <div>
+            <label class="block text-sm font-medium mb-1">Password</label>
+            <input type="password" required class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary" placeholder="••••••••">
+          </div>
+          <button type="submit" class="w-full bg-primary text-white font-semibold py-2.5 rounded-lg hover:bg-primaryDark transition">
+            Login
+          </button>
+          <p class="text-center text-sm text-gray-500">
+            Don't have an account?
+            <button type="button" onclick="switchAuth('register')" class="text-primary font-medium hover:underline">Register</button>
+          </p>
+        </form>
+
+        <!-- Register Form (hidden by default) -->
+        <form id="register-form" class="space-y-4 hidden" onsubmit="handleRegister(event)">
+          <div>
+            <label class="block text-sm font-medium mb-1">Full Name / Company Name</label>
+            <input type="text" required class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary" placeholder="John Doe or Danga Security Ltd">
+          </div>
+          <div>
+            <label class="block text-sm font-medium mb-1">Email</label>
+            <input type="email" required class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary" placeholder="you@example.com">
+          </div>
+          <div>
+            <label class="block text-sm font-medium mb-1">Phone</label>
+            <input type="tel" required class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary" placeholder="+234 800 000 0000">
+          </div>
+          <div>
+            <label class="block text-sm font-medium mb-1">Password</label>
+            <input type="password" required minlength="6" class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary" placeholder="Min 6 characters">
+          </div>
+          <div id="company-extra" class="hidden space-y-4">
+            <div>
+              <label class="block text-sm font-medium mb-1">Service Locations</label>
+              <input type="text" class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary" placeholder="e.g. Kano State, Lagos, Entire Nigeria">
+            </div>
+            <div>
+              <label class="block text-sm font-medium mb-1">Company Address</label>
+              <input type="text" class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary" placeholder="Street, City, State">
+            </div>
+          </div>
+          <button type="submit" class="w-full bg-primary text-white font-semibold py-2.5 rounded-lg hover:bg-primaryDark transition">
+            Create Account
+          </button>
+          <p class="text-center text-sm text-gray-500">
+            Already have an account?
+            <button type="button" onclick="switchAuth('login')" class="text-primary font-medium hover:underline">Login</button>
+          </p>
+        </form>
+      </div>
+    </div>
+  </section>
+
+  <!-- Services Section -->
+  <section id="services" class="py-16 bg-white">
+    <div class="max-w-7xl mx-auto px-4">
+      <div class="text-center mb-12">
+        <h2 class="text-3xl font-bold text-gray-900">Our Services</h2>
+        <p class="text-gray-600 mt-2">Everything you need for safety and security</p>
+      </div>
+      <div class="grid md:grid-cols-3 gap-8">
+        <!-- Card 1 -->
+        <div class="border border-gray-200 rounded-xl p-6 hover:shadow-lg transition">
+          <div class="w-12 h-12 bg-teal-100 text-primary rounded-lg flex items-center justify-center mb-4">
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+          </div>
+          <h3 class="text-xl font-semibold mb-2">Hire Security Officers</h3>
+          <p class="text-gray-600 text-sm">Gatemen, static guards, mobile patrols. Choose by location, gender, specialty and experience.</p>
+        </div>
+        <!-- Card 2 -->
+        <div class="border border-gray-200 rounded-xl p-6 hover:shadow-lg transition">
+          <div class="w-12 h-12 bg-amber-100 text-amber-600 rounded-lg flex items-center justify-center mb-4">
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"/></svg>
+          </div>
+          <h3 class="text-xl font-semibold mb-2">CCTV Installations</h3>
+          <p class="text-gray-600 text-sm">Professional camera installation, monitoring systems and maintenance packages.</p>
+        </div>
+        <!-- Card 3 -->
+        <div class="border border-gray-200 rounded-xl p-6 hover:shadow-lg transition">
+          <div class="w-12 h-12 bg-indigo-100 text-indigo-600 rounded-lg flex items-center justify-center mb-4">
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg>
+          </div>
+          <h3 class="text-xl font-semibold mb-2">VIP / Personal Security</h3>
+          <p class="text-gray-600 text-sm">Close protection officers for individuals, executives and high-profile events.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- How it Works -->
+  <section id="how-it-works" class="py-16 bg-gray-50">
+    <div class="max-w-7xl mx-auto px-4">
+      <div class="text-center mb-12">
+        <h2 class="text-3xl font-bold">How It Works</h2>
+        <p class="text-gray-600 mt-2">Simple process for both customers and companies</p>
+      </div>
+      <div class="grid md:grid-cols-4 gap-6">
+        <div class="text-center">
+          <div class="w-12 h-12 bg-primary text-white rounded-full flex items-center justify-center mx-auto mb-4 font-bold text-lg">1</div>
+          <h3 class="font-semibold mb-1">Register</h3>
+          <p class="text-sm text-gray-600">Create a free account as Customer or Security Company</p>
+        </div>
+        <div class="text-center">
+          <div class="w-12 h-12 bg-primary text-white rounded-full flex items-center justify-center mx-auto mb-4 font-bold text-lg">2</div>
+          <h3 class="font-semibold mb-1">Browse or List</h3>
+          <p class="text-sm text-gray-600">Customers search services. Companies add officers & prices</p>
+        </div>
+        <div class="text-center">
+          <div class="w-12 h-12 bg-primary text-white rounded-full flex items-center justify-center mx-auto mb-4 font-bold text-lg">3</div>
+          <h3 class="font-semibold mb-1">Request</h3>
+          <p class="text-sm text-gray-600">Submit request with duration (days/months) and details</p>
+        </div>
+        <div class="text-center">
+          <div class="w-12 h-12 bg-primary text-white rounded-full flex items-center justify-center mx-auto mb-4 font-bold text-lg">4</div>
+          <h3 class="font-semibold mb-1">Get Matched</h3>
+          <p class="text-sm text-gray-600">Request reviewed & forwarded within 24 hours</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Sample Companies -->
+  <section id="companies" class="py-16 bg-white">
+    <div class="max-w-7xl mx-auto px-4">
+      <div class="text-center mb-12">
+        <h2 class="text-3xl font-bold">Trusted Security Companies</h2>
+        <p class="text-gray-600 mt-2">Verified partners ready to serve you</p>
+      </div>
+      <div class="grid md:grid-cols-2 gap-6 max-w-4xl mx-auto">
+        <div class="border rounded-xl p-5 flex gap-4 items-start">
+          <div class="w-14 h-14 bg-teal-100 rounded-lg flex items-center justify-center font-bold text-primary text-xl">D</div>
+          <div>
+            <h3 class="font-semibold text-lg">Danga Security Services</h3>
+            <p class="text-sm text-gray-500 mb-1">Kano State • Officers & Gatemen</p>
+            <p class="text-sm text-gray-600">Specializes in hiring trained security officers and gate men across Kano.</p>
+          </div>
+        </div>
+        <div class="border rounded-xl p-5 flex gap-4 items-start">
+          <div class="w-14 h-14 bg-amber-100 rounded-lg flex items-center justify-center font-bold text-amber-700 text-xl">P</div>
+          <div>
+            <h3 class="font-semibold text-lg">Pepe Security Services</h3>
+            <p class="text-sm text-gray-500 mb-1">Nationwide / Africa • Full Services</p>
+            <p class="text-sm text-gray-600">Officers, CCTV installations & VIP personal security.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- CTA -->
+  <section class="py-16 bg-primary text-white">
+    <div class="max-w-4xl mx-auto px-4 text-center">
+      <h2 class="text-3xl font-bold mb-4">Ready to get started?</h2>
+      <p class="text-teal-100 mb-8">Join as a customer looking for security or as a company offering services.</p>
+      <button onclick="openAuth('register')" class="bg-white text-primary font-semibold px-8 py-3 rounded-lg hover:bg-gray-100 transition">
+        Create Free Account
+      </button>
+    </div>
+  </section>
+
+  <!-- Footer -->
+  <footer class="bg-gray-900 text-gray-400 py-10">
+    <div class="max-w-7xl mx-auto px-4 grid md:grid-cols-3 gap-8">
+      <div>
+        <div class="flex items-center gap-2 text-white mb-3">
+          <div class="w-8 h-8 bg-primary rounded flex items-center justify-center font-bold">SG</div>
+          <span class="font-bold">SecureGuard</span>
+        </div>
+        <p class="text-sm">Connecting people with trusted security companies across Nigeria and Africa.</p>
+      </div>
+      <div>
+        <h4 class="text-white font-semibold mb-3">Quick Links</h4>
+        <ul class="space-y-2 text-sm">
+          <li><a href="#services" class="hover:text-white">Services</a></li>
+          <li><a href="#how-it-works" class="hover:text-white">How it Works</a></li>
+          <li><a href="#" class="hover:text-white">For Companies</a></li>
+        </ul>
+      </div>
+      <div>
+        <h4 class="text-white font-semibold mb-3">Contact</h4>
+        <p class="text-sm">support@secureguard.ng</p>
+        <p class="text-sm mt-1">+234 800 000 0000</p>
+      </div>
+    </div>
+    <div class="max-w-7xl mx-auto px-4 mt-8 pt-6 border-t border-gray-800 text-sm text-center space-y-1">
+      <p>© 2026 SecureGuard Marketplace. All rights reserved.</p>
+      <p class="text-gray-500">Website designed & developed by <span class="text-white font-medium">ADLE WEBDESIGNS</span></p>
+      <p class="text-gray-500">📞 09036842183 &nbsp;|&nbsp; ✉️ Alamienn02@yahoo.com</p>
+    </div>
+  </footer>
+
+  <script src="js/auth.js"></script>
+</body>
+</html>

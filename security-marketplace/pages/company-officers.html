@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>My Officers – SecureGuard</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: { extend: { colors: { primary: '#0f766e', primaryDark: '#0d5c56' } } }
+    }
+  </script>
+</head>
+<body class="bg-gray-50 text-gray-800">
+
+  <nav class="bg-white shadow-sm">
+    <div class="max-w-7xl mx-auto px-4 h-14 flex items-center justify-between">
+      <div class="flex items-center gap-2">
+        <div class="w-8 h-8 bg-primary rounded flex items-center justify-center text-white font-bold text-sm">SG</div>
+        <span class="font-bold text-primary">SecureGuard</span>
+        <span class="text-xs bg-amber-100 text-amber-800 px-2 py-0.5 rounded ml-2">Company</span>
+      </div>
+      <button onclick="logout()" class="text-sm text-red-600 hover:underline">Logout</button>
+    </div>
+  </nav>
+
+  <div class="max-w-7xl mx-auto px-4 py-8 grid md:grid-cols-4 gap-6">
+    <aside class="md:col-span-1">
+      <div class="bg-white rounded-xl shadow-sm p-4 space-y-1">
+        <a href="company-dashboard.html" class="block px-3 py-2 rounded-lg hover:bg-gray-100">Dashboard</a>
+        <a href="company-officers.html" class="block px-3 py-2 rounded-lg bg-primary text-white font-medium">My Officers</a>
+        <a href="company-services.html" class="block px-3 py-2 rounded-lg hover:bg-gray-100">My Services</a>
+        <a href="company-requests.html" class="block px-3 py-2 rounded-lg hover:bg-gray-100">Incoming Requests</a>
+        <a href="company-profile.html" class="block px-3 py-2 rounded-lg hover:bg-gray-100">Company Profile</a>
+      </div>
+    </aside>
+
+    <main class="md:col-span-3 space-y-6">
+      <div class="flex justify-between items-center">
+        <h1 class="text-2xl font-bold">Security Officers</h1>
+        <button onclick="document.getElementById('add-form').classList.toggle('hidden')" 
+                class="bg-primary text-white px-4 py-2 rounded-lg text-sm hover:bg-primaryDark">
+          + Add Officer
+        </button>
+      </div>
+
+      <!-- Add Officer Form -->
+      <div id="add-form" class="hidden bg-white rounded-xl shadow-sm p-6">
+        <h2 class="font-semibold mb-4">Add New Officer</h2>
+        <form onsubmit="addOfficer(event)" class="grid sm:grid-cols-2 gap-4">
+          <div>
+            <label class="block text-sm font-medium mb-1">Full Name *</label>
+            <input name="name" required class="w-full border rounded-lg px-3 py-2" placeholder="Ahmed Musa">
+          </div>
+          <div>
+            <label class="block text-sm font-medium mb-1">Age</label>
+            <input name="age" type="number" min="18" max="65" class="w-full border rounded-lg px-3 py-2" placeholder="32">
+          </div>
+          <div>
+            <label class="block text-sm font-medium mb-1">Gender</label>
+            <select name="gender" class="w-full border rounded-lg px-3 py-2">
+              <option value="Male">Male</option>
+              <option value="Female">Female</option>
+            </select>
+          </div>
+          <div>
+            <label class="block text-sm font-medium mb-1">Specialty</label>
+            <input name="specialty" class="w-full border rounded-lg px-3 py-2" placeholder="Gate man, Armed guard, VIP...">
+          </div>
+          <div class="sm:col-span-2">
+            <label class="block text-sm font-medium mb-1">Brief Introduction</label>
+            <textarea name="intro" rows="2" class="w-full border rounded-lg px-3 py-2" placeholder="5 years experience, trained in..."></textarea>
+          </div>
+          <div>
+            <label class="block text-sm font-medium mb-1">Daily Rate (₦)</label>
+            <input name="rate" type="number" class="w-full border rounded-lg px-3 py-2" placeholder="15000">
+          </div>
+          <div>
+            <label class="block text-sm font-medium mb-1">Photo URL (optional)</label>
+            <input name="photo" class="w-full border rounded-lg px-3 py-2" placeholder="https://... or leave blank">
+          </div>
+          <div class="sm:col-span-2 flex gap-3">
+            <button type="submit" class="bg-primary text-white px-5 py-2 rounded-lg hover:bg-primaryDark">Save Officer</button>
+            <button type="button" onclick="document.getElementById('add-form').classList.add('hidden')" class="border px-5 py-2 rounded-lg">Cancel</button>
+          </div>
+        </form>
+      </div>
+
+      <!-- Officers List -->
+      <div id="officers-list" class="space-y-4">
+        <!-- filled by JS -->
+      </div>
+    </main>
+  </div>
+
+  <script>
+    const user = JSON.parse(localStorage.getItem('sg_current_user') || 'null');
+    if (!user || user.role !== 'company') {
+      window.location.href = '../index.html';
+    }
+
+    const storageKey = 'sg_officers_' + user.id;
+
+    function loadOfficers() {
+      const officers = JSON.parse(localStorage.getItem(storageKey) || '[]');
+      const container = document.getElementById('officers-list');
+
+      if (officers.length === 0) {
+        container.innerHTML = '<div class="bg-white rounded-xl p-8 text-center text-gray-500">No officers added yet. Click “+ Add Officer” to start.</div>';
+        return;
+      }
+
+      container.innerHTML = officers.map((o, i) => `
+        <div class="bg-white rounded-xl shadow-sm p-5 flex gap-4 items-start">
+          <div class="w-16 h-16 bg-gray-200 rounded-lg flex items-center justify-center text-gray-500 text-xl font-bold overflow-hidden">
+            ${o.photo ? `<img src="${o.photo}" class="w-full h-full object-cover">` : o.name.charAt(0)}
+          </div>
+          <div class="flex-1">
+            <div class="flex justify-between items-start">
+              <div>
+                <h3 class="font-semibold text-lg">${o.name}</h3>
+                <p class="text-sm text-gray-500">${o.gender} • ${o.age || '—'} yrs • ${o.specialty || 'General'}</p>
+              </div>
+              <button onclick="deleteOfficer(${i})" class="text-red-500 text-sm hover:underline">Remove</button>
+            </div>
+            <p class="text-sm text-gray-600 mt-1">${o.intro || ''}</p>
+            <p class="text-sm font-medium text-primary mt-2">₦${Number(o.rate || 0).toLocaleString()} / day</p>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    function addOfficer(e) {
+      e.preventDefault();
+      const form = e.target;
+      const data = Object.fromEntries(new FormData(form));
+      data.id = Date.now().toString();
+      data.available = true;
+
+      const officers = JSON.parse(localStorage.getItem(storageKey) || '[]');
+      officers.push(data);
+      localStorage.setItem(storageKey, JSON.stringify(officers));
+
+      form.reset();
+      document.getElementById('add-form').classList.add('hidden');
+      loadOfficers();
+    }
+
+    function deleteOfficer(index) {
+      if (!confirm('Remove this officer?')) return;
+      const officers = JSON.parse(localStorage.getItem(storageKey) || '[]');
+      officers.splice(index, 1);
+      localStorage.setItem(storageKey, JSON.stringify(officers));
+      loadOfficers();
+    }
+
+    function logout() {
+      localStorage.removeItem('sg_current_user');
+      window.location.href = '../index.html';
+    }
+
+    loadOfficers();
+  </script>
+</body>
+</html>

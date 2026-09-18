@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Incoming Requests – SecureGuard</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: { extend: { colors: { primary: '#0f766e', primaryDark: '#0d5c56' } } }
+    }
+  </script>
+</head>
+<body class="bg-gray-50 text-gray-800">
+
+  <nav class="bg-white shadow-sm">
+    <div class="max-w-7xl mx-auto px-4 h-14 flex items-center justify-between">
+      <div class="flex items-center gap-2">
+        <div class="w-8 h-8 bg-primary rounded flex items-center justify-center text-white font-bold text-sm">SG</div>
+        <span class="font-bold text-primary">SecureGuard</span>
+        <span class="text-xs bg-amber-100 text-amber-800 px-2 py-0.5 rounded ml-2">Company</span>
+      </div>
+      <button onclick="logout()" class="text-sm text-red-600 hover:underline">Logout</button>
+    </div>
+  </nav>
+
+  <div class="max-w-7xl mx-auto px-4 py-8 grid md:grid-cols-4 gap-6">
+    <aside class="md:col-span-1">
+      <div class="bg-white rounded-xl shadow-sm p-4 space-y-1">
+        <a href="company-dashboard.html" class="block px-3 py-2 rounded-lg hover:bg-gray-100">Dashboard</a>
+        <a href="company-officers.html" class="block px-3 py-2 rounded-lg hover:bg-gray-100">My Officers</a>
+        <a href="company-services.html" class="block px-3 py-2 rounded-lg hover:bg-gray-100">My Services</a>
+        <a href="company-requests.html" class="block px-3 py-2 rounded-lg bg-primary text-white font-medium">Incoming Requests</a>
+        <a href="company-profile.html" class="block px-3 py-2 rounded-lg hover:bg-gray-100">Company Profile</a>
+      </div>
+    </aside>
+
+    <main class="md:col-span-3 space-y-6">
+      <div>
+        <h1 class="text-2xl font-bold">Incoming Requests</h1>
+        <p class="text-gray-600 text-sm">Review and respond within 24 hours</p>
+      </div>
+
+      <div id="requests-list" class="space-y-4">
+        <!-- filled by JS -->
+      </div>
+    </main>
+  </div>
+
+  <script>
+    const user = JSON.parse(localStorage.getItem('sg_current_user') || 'null');
+    if (!user || user.role !== 'company') {
+      window.location.href = '../index.html';
+    }
+
+    function loadRequests() {
+      const all = JSON.parse(localStorage.getItem('sg_requests') || '[]');
+      const mine = all.filter(r => r.companyId === user.id);
+      const container = document.getElementById('requests-list');
+
+      if (mine.length === 0) {
+        container.innerHTML = `
+          <div class="bg-white rounded-xl p-10 text-center text-gray-500">
+            No requests yet. When customers request your officers or services, they will appear here.
+          </div>`;
+        return;
+      }
+
+      // newest first
+      mine.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+
+      container.innerHTML = mine.map((r, idx) => {
+        const statusColor = {
+          pending: 'bg-amber-100 text-amber-800',
+          accepted: 'bg-green-100 text-green-800',
+          rejected: 'bg-red-100 text-red-800'
+        }[r.status] || 'bg-gray-100 text-gray-800';
+
+        return `
+        <div class="bg-white rounded-xl shadow-sm p-5">
+          <div class="flex flex-wrap justify-between items-start gap-3 mb-3">
+            <div>
+              <h3 class="font-semibold text-lg">${r.officerName || 'Service Request'}</h3>
+              <p class="text-sm text-gray-500">From: ${r.customerName}</p>
+            </div>
+            <span class="text-xs px-2.5 py-1 rounded-full font-medium ${statusColor}">${r.status.toUpperCase()}</span>
+          </div>
+          <div class="grid sm:grid-cols-2 gap-2 text-sm text-gray-600 mb-4">
+            <p><strong>Duration:</strong> ${r.duration} ${r.unit}</p>
+            <p><strong>Start Date:</strong> ${r.startDate || 'Not specified'}</p>
+            <p class="sm:col-span-2"><strong>Details:</strong> ${r.details}</p>
+            <p class="text-xs text-gray-400">Submitted: ${new Date(r.createdAt).toLocaleString()}</p>
+          </div>
+          ${r.status === 'pending' ? `
+          <div class="flex gap-2">
+            <button onclick="updateStatus('${r.id}', 'accepted')" class="bg-green-600 text-white text-sm px-4 py-1.5 rounded-lg hover:bg-green-700">Accept</button>
+            <button onclick="updateStatus('${r.id}', 'rejected')" class="bg-red-600 text-white text-sm px-4 py-1.5 rounded-lg hover:bg-red-700">Reject</button>
+          </div>` : ''}
+        </div>`;
+      }).join('');
+    }
+
+    function updateStatus(id, status) {
+      const all = JSON.parse(localStorage.getItem('sg_requests') || '[]');
+      const idx = all.findIndex(r => r.id === id);
+      if (idx !== -1) {
+        all[idx].status = status;
+        all[idx].respondedAt = new Date().toISOString();
+        localStorage.setItem('sg_requests', JSON.stringify(all));
+        loadRequests();
+      }
+    }
+
+    function logout() {
+      localStorage.removeItem('sg_current_user');
+      window.location.href = '../index.html';
+    }
+
+    loadRequests();
+  </script>
+</body>
+</html>

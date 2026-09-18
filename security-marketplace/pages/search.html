@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Search Services – SecureGuard</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: { extend: { colors: { primary: '#0f766e', primaryDark: '#0d5c56' } } }
+    }
+  </script>
+</head>
+<body class="bg-gray-50 text-gray-800">
+
+  <nav class="bg-white shadow-sm">
+    <div class="max-w-7xl mx-auto px-4 h-14 flex items-center justify-between">
+      <div class="flex items-center gap-2">
+        <div class="w-8 h-8 bg-primary rounded flex items-center justify-center text-white font-bold text-sm">SG</div>
+        <span class="font-bold text-primary">SecureGuard</span>
+        <span class="text-xs bg-teal-100 text-primary px-2 py-0.5 rounded ml-2">Customer</span>
+      </div>
+      <div class="flex items-center gap-4 text-sm">
+        <a href="customer-dashboard.html" class="hover:underline">Dashboard</a>
+        <button onclick="logout()" class="text-red-600 hover:underline">Logout</button>
+      </div>
+    </div>
+  </nav>
+
+  <div class="max-w-7xl mx-auto px-4 py-8">
+    <div class="mb-6">
+      <h1 class="text-2xl font-bold">Search Services</h1>
+      <p class="text-gray-600 text-sm">Find officers or installation packages by keyword or location</p>
+    </div>
+
+    <!-- Search Bar -->
+    <div class="bg-white rounded-xl shadow-sm p-4 mb-6 flex flex-col sm:flex-row gap-3">
+      <input id="q" type="text" placeholder="Search by name, specialty, company, location..."
+             class="flex-1 border rounded-lg px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-primary"
+             oninput="doSearch()">
+      <select id="type-filter" class="border rounded-lg px-3 py-2.5" onchange="doSearch()">
+        <option value="all">All Types</option>
+        <option value="officer">Security Officers</option>
+        <option value="cctv">CCTV Installations</option>
+        <option value="other">Other Services</option>
+      </select>
+    </div>
+
+    <div id="results" class="space-y-4">
+      <div class="text-center text-gray-500 py-10">Type something to search...</div>
+    </div>
+  </div>
+
+  <script>
+    const user = JSON.parse(localStorage.getItem('sg_current_user') || 'null');
+    if (!user || user.role !== 'customer') {
+      window.location.href = '../index.html';
+    }
+
+    function getAllItems() {
+      const allUsers = JSON.parse(localStorage.getItem('sg_users') || '[]');
+      const companies = allUsers.filter(u => u.role === 'company');
+      let items = [];
+
+      companies.forEach(c => {
+        // Officers
+        const officers = JSON.parse(localStorage.getItem('sg_officers_' + c.id) || '[]');
+        officers.forEach(o => {
+          items.push({
+            kind: 'officer',
+            id: o.id,
+            title: o.name,
+            subtitle: `${o.gender || ''} • ${o.specialty || 'Security Officer'}`,
+            description: o.intro || '',
+            price: o.rate,
+            priceLabel: '₦' + Number(o.rate || 0).toLocaleString() + '/day',
+            companyId: c.id,
+            companyName: c.name,
+            location: c.location || '',
+            raw: o
+          });
+        });
+
+        // Services
+        const services = JSON.parse(localStorage.getItem('sg_services_' + c.id) || '[]');
+        services.forEach(s => {
+          items.push({
+            kind: s.type === 'CCTV Installation' || s.type.toLowerCase().includes('cctv') ? 'cctv' : 'other',
+            id: s.id,
+            title: s.title,
+            subtitle: s.type,
+            description: s.description || '',
+            price: s.price,
+            priceLabel: '₦' + Number(s.price).toLocaleString() + ' (' + s.priceUnit + ')',
+            companyId: c.id,
+            companyName: c.name,
+            location: c.location || '',
+            raw: s
+          });
+        });
+      });
+      return items;
+    }
+
+    let allItems = getAllItems();
+
+    function doSearch() {
+      const q = document.getElementById('q').value.toLowerCase().trim();
+      const type = document.getElementById('type-filter').value;
+      const container = document.getElementById('results');
+
+      let filtered = allItems;
+
+      if (type !== 'all') {
+        filtered = filtered.filter(i => i.kind === type);
+      }
+
+      if (q) {
+        filtered = filtered.filter(i =>
+          i.title.toLowerCase().includes(q) ||
+          i.subtitle.toLowerCase().includes(q) ||
+          i.description.toLowerCase().includes(q) ||
+          i.companyName.toLowerCase().includes(q) ||
+          (i.location || '').toLowerCase().includes(q)
+        );
+      }
+
+      if (filtered.length === 0) {
+        container.innerHTML = `<div class="bg-white rounded-xl p-10 text-center text-gray-500">No results found.</div>`;
+        return;
+      }
+
+      container.innerHTML = filtered.map(i => `
+        <div class="bg-white rounded-xl shadow-sm p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div>
+            <div class="flex items-center gap-2 mb-1">
+              <span class="text-xs px-2 py-0.5 rounded ${i.kind === 'officer' ? 'bg-teal-100 text-primary' : i.kind === 'cctv' ? 'bg-amber-100 text-amber-800' : 'bg-gray-100 text-gray-700'}">
+                ${i.kind === 'officer' ? 'Officer' : i.kind === 'cctv' ? 'CCTV' : 'Service'}
+              </span>
+              <span class="text-xs text-gray-500">${i.companyName} ${i.location ? '• ' + i.location : ''}</span>
+            </div>
+            <h3 class="font-semibold text-lg">${i.title}</h3>
+            <p class="text-sm text-gray-500">${i.subtitle}</p>
+            <p class="text-sm text-gray-600 mt-1 line-clamp-2">${i.description}</p>
+          </div>
+          <div class="text-right shrink-0">
+            <div class="font-semibold text-primary mb-2">${i.priceLabel}</div>
+            <a href="${i.kind === 'officer' ? 'personnel.html' : 'installations.html'}"
+               class="inline-block bg-primary text-white text-sm px-4 py-1.5 rounded-lg hover:bg-primaryDark">
+              View & Request
+            </a>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    function logout() {
+      localStorage.removeItem('sg_current_user');
+      window.location.href = '../index.html';
+    }
+
+    // Show all on load
+    doSearch();
+  </script>
+</body>
+</html>

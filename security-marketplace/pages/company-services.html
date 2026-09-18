@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>My Services – SecureGuard</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: { extend: { colors: { primary: '#0f766e', primaryDark: '#0d5c56' } } }
+    }
+  </script>
+</head>
+<body class="bg-gray-50 text-gray-800">
+
+  <nav class="bg-white shadow-sm">
+    <div class="max-w-7xl mx-auto px-4 h-14 flex items-center justify-between">
+      <div class="flex items-center gap-2">
+        <div class="w-8 h-8 bg-primary rounded flex items-center justify-center text-white font-bold text-sm">SG</div>
+        <span class="font-bold text-primary">SecureGuard</span>
+        <span class="text-xs bg-amber-100 text-amber-800 px-2 py-0.5 rounded ml-2">Company</span>
+      </div>
+      <button onclick="logout()" class="text-sm text-red-600 hover:underline">Logout</button>
+    </div>
+  </nav>
+
+  <div class="max-w-7xl mx-auto px-4 py-8 grid md:grid-cols-4 gap-6">
+    <aside class="md:col-span-1">
+      <div class="bg-white rounded-xl shadow-sm p-4 space-y-1">
+        <a href="company-dashboard.html" class="block px-3 py-2 rounded-lg hover:bg-gray-100">Dashboard</a>
+        <a href="company-officers.html" class="block px-3 py-2 rounded-lg hover:bg-gray-100">My Officers</a>
+        <a href="company-services.html" class="block px-3 py-2 rounded-lg bg-primary text-white font-medium">My Services</a>
+        <a href="company-requests.html" class="block px-3 py-2 rounded-lg hover:bg-gray-100">Incoming Requests</a>
+        <a href="company-profile.html" class="block px-3 py-2 rounded-lg hover:bg-gray-100">Company Profile</a>
+      </div>
+    </aside>
+
+    <main class="md:col-span-3 space-y-6">
+      <div class="flex justify-between items-center">
+        <div>
+          <h1 class="text-2xl font-bold">My Services</h1>
+          <p class="text-gray-600 text-sm">Add the services you offer (CCTV, VIP, etc.) with prices</p>
+        </div>
+        <button onclick="document.getElementById('add-form').classList.toggle('hidden')"
+                class="bg-primary text-white px-4 py-2 rounded-lg text-sm hover:bg-primaryDark">
+          + Add Service
+        </button>
+      </div>
+
+      <!-- Add Form -->
+      <div id="add-form" class="hidden bg-white rounded-xl shadow-sm p-6">
+        <h2 class="font-semibold mb-4">Add New Service</h2>
+        <form onsubmit="addService(event)" class="grid sm:grid-cols-2 gap-4">
+          <div>
+            <label class="block text-sm font-medium mb-1">Service Type *</label>
+            <select name="type" required class="w-full border rounded-lg px-3 py-2">
+              <option value="">Select type</option>
+              <option value="CCTV Installation">CCTV Installation</option>
+              <option value="VIP / Personal Security">VIP / Personal Security</option>
+              <option value="Mobile Patrol">Mobile Patrol</option>
+              <option value="Event Security">Event Security</option>
+              <option value="Other">Other</option>
+            </select>
+          </div>
+          <div>
+            <label class="block text-sm font-medium mb-1">Title / Package Name *</label>
+            <input name="title" required class="w-full border rounded-lg px-3 py-2" placeholder="e.g. 8-Camera Basic Package">
+          </div>
+          <div class="sm:col-span-2">
+            <label class="block text-sm font-medium mb-1">Description</label>
+            <textarea name="description" rows="2" class="w-full border rounded-lg px-3 py-2" placeholder="What is included..."></textarea>
+          </div>
+          <div>
+            <label class="block text-sm font-medium mb-1">Price (₦) *</label>
+            <input name="price" type="number" required min="0" class="w-full border rounded-lg px-3 py-2" placeholder="150000">
+          </div>
+          <div>
+            <label class="block text-sm font-medium mb-1">Price Unit</label>
+            <select name="priceUnit" class="w-full border rounded-lg px-3 py-2">
+              <option value="one-time">One-time</option>
+              <option value="per day">Per day</option>
+              <option value="per month">Per month</option>
+            </select>
+          </div>
+          <div class="sm:col-span-2 flex gap-3">
+            <button type="submit" class="bg-primary text-white px-5 py-2 rounded-lg hover:bg-primaryDark">Save Service</button>
+            <button type="button" onclick="document.getElementById('add-form').classList.add('hidden')" class="border px-5 py-2 rounded-lg">Cancel</button>
+          </div>
+        </form>
+      </div>
+
+      <!-- List -->
+      <div id="services-list" class="space-y-4"></div>
+    </main>
+  </div>
+
+  <script>
+    const user = JSON.parse(localStorage.getItem('sg_current_user') || 'null');
+    if (!user || user.role !== 'company') {
+      window.location.href = '../index.html';
+    }
+
+    const storageKey = 'sg_services_' + user.id;
+
+    function loadServices() {
+      const services = JSON.parse(localStorage.getItem(storageKey) || '[]');
+      const container = document.getElementById('services-list');
+
+      if (services.length === 0) {
+        container.innerHTML = `
+          <div class="bg-white rounded-xl p-10 text-center text-gray-500">
+            No services added yet. Click “+ Add Service” to list CCTV, VIP protection, etc.
+          </div>`;
+        return;
+      }
+
+      container.innerHTML = services.map((s, i) => `
+        <div class="bg-white rounded-xl shadow-sm p-5 flex justify-between items-start gap-4">
+          <div>
+            <span class="text-xs bg-teal-100 text-primary px-2 py-0.5 rounded">${s.type}</span>
+            <h3 class="font-semibold text-lg mt-1">${s.title}</h3>
+            <p class="text-sm text-gray-600 mt-1">${s.description || ''}</p>
+            <p class="text-primary font-semibold mt-2">₦${Number(s.price).toLocaleString()} <span class="text-gray-500 font-normal text-sm">(${s.priceUnit})</span></p>
+          </div>
+          <button onclick="deleteService(${i})" class="text-red-500 text-sm hover:underline shrink-0">Remove</button>
+        </div>
+      `).join('');
+    }
+
+    function addService(e) {
+      e.preventDefault();
+      const form = e.target;
+      const data = Object.fromEntries(new FormData(form));
+      data.id = Date.now().toString();
+
+      const services = JSON.parse(localStorage.getItem(storageKey) || '[]');
+      services.push(data);
+      localStorage.setItem(storageKey, JSON.stringify(services));
+
+      form.reset();
+      document.getElementById('add-form').classList.add('hidden');
+      loadServices();
+    }
+
+    function deleteService(index) {
+      if (!confirm('Remove this service?')) return;
+      const services = JSON.parse(localStorage.getItem(storageKey) || '[]');
+      services.splice(index, 1);
+      localStorage.setItem(storageKey, JSON.stringify(services));
+      loadServices();
+    }
+
+    function logout() {
+      localStorage.removeItem('sg_current_user');
+      window.location.href = '../index.html';
+    }
+
+    loadServices();
+  </script>
+</body>
+</html>
